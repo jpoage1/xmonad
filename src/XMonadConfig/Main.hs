@@ -20,7 +20,6 @@ import XMonadConfig.Hooks
 import XMonadConfig.Keys
 import XMonadConfig.Logging (logToTmpFile)
 import XMonadConfig.NitrogenWallpaper (setRandomNitrogenWallpaper)
-import XMonadConfig.Polybar (launchPolybar)
 
 main :: IO ()
 main =

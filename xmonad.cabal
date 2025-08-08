@@ -1,0 +1,32 @@
+name:                my-xmonad
+version:             0.1.0.0
+author:              author
+maintainer:          email@email.com
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable my-xmonad
+  hs-source-dirs:      .
+                     , ./src
+  main-is:             xmonad.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , data-default
+                     , xmonad
+                     , xmonad-contrib
+                     , random-shuffle
+                     , process
+                     , filepath
+                     , directory
+                     , time
+                     , unix
+                     , bytestring
+  default-language:    Haskell2010
+  other-modules:       XMonadConfig.Conky
+                     , XMonadConfig.Hooks
+                     , XMonadConfig.Keys
+                     , XMonadConfig.Logging
+                     , XMonadConfig.Main
+                     , XMonadConfig.NitrogenWallpaper
+                     , XMonadConfig.PromptUtils
+                     , XMonadConfig.StatusBar

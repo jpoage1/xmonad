@@ -13,7 +13,7 @@ import XMonad.Prompt.ConfirmPrompt
 import XMonad.Prompt.Input
 import XMonad.Util.Paste
 import XMonad.Util.Run (safeSpawn)
-import XMonadConfig.Conky (runConky, stopConky)
+import XMonadConfig.Conky (runConky, stopConky, raiseConkys, lowerConkys)
 import XMonadConfig.Logging (logToTmpFile)
 import XMonadConfig.PromptUtils
 import XMonadConfig.StatusBar
@@ -25,8 +25,9 @@ myKeys =
     ("M-<Print>", takeScreenshotWithPrompt "/tmp/screenshot.png"),
     ("M-S-.", confirmPrompt myXPConfig "Exit XMonad?" $ io exitSuccess),
     ("M-l", spawn "i3lock"),
-    ("M-S-c", runConky),
     ("M-c", stopConky),
+    ("M-S-c", raiseConkys),
+    ("M-C-c", lowerConkys),
     ("M-S-p", launchTaffybars),
     ("M-S-r", spawn "xmonad --restart"),
     ("M-m", spawn "rofi -show drun"),

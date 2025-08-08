@@ -1,4 +1,4 @@
-module XMonadConfig.Conky (runConky, startConkyIfEnabled, stopConky) where
+module XMonadConfig.Conky (runConky, startConkyIfEnabled, stopConky, raiseConkys, lowerConkys) where
 
 import Control.Exception (SomeException, try)
 import Control.Monad
@@ -24,6 +24,15 @@ import Text.Read (readMaybe)
 import XMonad
 import qualified XMonad.Util.Run as Run
 import XMonadConfig.Logging (logToTmpFile)
+import XMonad.Util.NamedWindows (getName)
+import qualified XMonad.StackSet as W
+import XMonad.Util.NamedWindows (getName)
+import XMonad.Actions.WithAll (sinkAll)
+import XMonad.Actions.WindowBringer (bringWindow)
+-- import XMonad.X11 (getWindowAttributes, wa_override_redirect)
+import Data.Maybe (isJust)
+import Data.List (find, partition)
+import Control.Monad (filterM)
 
 runConky :: X ()
 runConky = do
@@ -164,3 +173,38 @@ stopConkyWithConfig config = do
     let pid = read pidStr :: Int
     valid <- isConkyWithConfig config pid
     when valid $ (try (signalProcess nullSignal (fromIntegral pid)) :: IO (Either SomeException ())) >> return ()
+
+conkyTitles :: [String]
+conkyTitles = ["conky_bottom", "conky_middle", "conky_top"]
+
+isConky :: Window -> X Bool
+isConky w = do
+  name <- getName w
+  return (show name `elem` conkyTitles)
+
+getConkys :: X [Window]
+getConkys = withWindowSet $ \ws -> filterM isConky (W.integrate' . W.stack . W.workspace . W.current $ ws)
+
+raiseConkys :: X ()
+raiseConkys = do
+  wins <- getConkys
+  mapM_ (\w -> windows (W.shiftMaster . W.focusWindow w)) (reverse wins)
+
+-- lowerConkys :: X ()
+-- lowerConkys = do
+--   wins <- getConkys
+--   mapM_ (\w -> windows (W.sink w)) wins
+--   ws <- gets windowset
+--   let allWins = W.integrate' . W.stack . W.workspace . W.current $ ws
+--       (cons, rest) = partition (`elem` wins) allWins
+--   windows $ \s -> s { W.current = (W.current s)
+--     { W.workspace = (W.workspace (W.current s))
+--       { W.stack = Just $ W.Stack (head rest) [] (tail rest ++ cons) } } }
+
+lowerConkys :: X ()
+lowerConkys = do
+  conkyWins <- getConkys
+  -- Sink all conky windows first
+  mapM_ (\w -> windows (W.sink w)) conkyWins
+  -- Then send each to the bottom of the stack
+  mapM_ (\w -> windows (W.swapDown . W.focusWindow w)) conkyWins

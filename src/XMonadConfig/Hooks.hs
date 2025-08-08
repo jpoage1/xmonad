@@ -15,6 +15,7 @@ import XMonadConfig.Conky (startConkyIfEnabled)
 import XMonadConfig.Logging (logToTmpFile)
 import XMonadConfig.NitrogenWallpaper (setRandomNitrogenWallpaper)
 import XMonadConfig.StatusBar (launchPolybars, launchTaffybars)
+import qualified XMonad.StackSet as W
 
 myStartupHook :: X ()
 myStartupHook = do
@@ -26,8 +27,8 @@ myStartupHook = do
   spawn "xss-lock --transfer-sleep-lock -- i3lock --nofork"
   -- launchPolybar
   io $ setRandomNitrogenWallpaper
-  io $ logToTmpFile "Startup hook finished"
   startConkyIfEnabled
+  io $ logToTmpFile "Startup hook finished"
 
 myManageHook :: ManageHook
 myManageHook =
@@ -37,4 +38,9 @@ myManageHook =
       className =? "Conky" --> doFloat,
       className =? "Xmessage" --> doFloat,
       isDialog --> doFloat
+    , title =? "conky_top"    --> myDoSink
+    , title =? "conky_middle" --> myDoSink
+    , title =? "conky_bottom" --> myDoSink
     ]
+
+myDoSink = ask >>= \w -> liftX (windows (W.sink w)) >> idHook
