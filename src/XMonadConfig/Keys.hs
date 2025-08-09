@@ -17,6 +17,14 @@ import XMonadConfig.Conky (runConky, stopConky, raiseConkys, lowerConkys)
 import XMonadConfig.Logging (logToTmpFile)
 import XMonadConfig.PromptUtils
 import XMonadConfig.StatusBar
+import XMonad.Hooks.SetWMName
+
+myTerminal :: String
+myTerminal = "alacritty"    -- Sets default terminal
+
+myBrowser :: String
+myBrowser = "qutebrowser "  -- Sets qutebrowser as browser
+
 
 myKeys :: [(String, X ())]
 myKeys =
@@ -47,7 +55,11 @@ myKeys =
     ("M-S-<Right>", withFocused (keysResizeWindow (10, 0) (0, 0))),
     ("M-S-<Left>", withFocused (keysResizeWindow (-10, 0) (0, 0))),
     ("M-b", sendMessage ToggleStruts)
-  ]
+  , ("M-<Return>", spawn (myTerminal))
+  , ("M-b", spawn (myBrowser))
+  , ("M-M1-h", spawn (myTerminal ++ " -e htop"))]
+
+
 
 toggleKBLayout :: X ()
 toggleKBLayout = do

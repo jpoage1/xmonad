@@ -10,10 +10,7 @@ let
 in
 pkgs.stdenv.mkDerivation {
   name = "xmonad-config";
-  src = pkgs.fetchGit {
-    url = "file://${toString ./}";
-    ref = "refs/heads/main";
-  };
+  src = ./.;
   buildInputs = [
     myGhc
   ];
