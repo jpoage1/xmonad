@@ -21,5 +21,6 @@ launchTaffybars :: X ()
 launchTaffybars = do
   liftIO $ logToTmpFile $ "Stopping any running taffybar instances..."
   spawn "pkill my-taffybar"
+  spawn $ "sleep 2"
   launchTaffybar "top"
   launchTaffybar "bottom"
