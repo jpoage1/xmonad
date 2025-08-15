@@ -33,14 +33,17 @@ myEditor = myTerminal ++ " -e vim "    -- Sets vim as editor
 myStartupHook :: X ()
 myStartupHook = do
   io $ logToTmpFile "Startup hook triggered"
-  spawn "picom --backend glx"
+--   spawn "picom --backend glx" -- Compositor
+  spawn "dunst"
+  spawn "lxqt-session -w xmonad"
+  spawn "lxqt-powermanagement"
   launchTaffybars
   spawn "setxkbmap -layout us -variant dvorak"
-  spawn "dunst"
-  spawn "xss-lock --transfer-sleep-lock -- i3lock --nofork"
+--   spawn "xss-lock --transfer-sleep-lock -- i3lock --nofork"
   -- launchPolybar
-  io $ setRandomNitrogenWallpaper
+
   startConkyIfEnabled
+  io $ setRandomNitrogenWallpaper
   io $ logToTmpFile "Startup hook finished"
 
 -- myManageHook :: ManageHook
@@ -68,10 +71,13 @@ myManageHook = composeAll
   , className =? "pinentry-gtk-2"  --> doFloat
   , className =? "splash"          --> doFloat
   , className =? "toolbar"         --> doFloat
+  , className =? "pavucontrol"         --> doFloat
+
+  , className =? ".blueman-manager-wrapped" --> doFloat
+  , className =? "nm-connection-editor" --> doFloat
+  , className =? "Nm-connection-editor" --> doFloat
   , className =? "Yad"             --> doCenterFloat
   , title =? "Oracle VM VirtualBox Manager"   --> doFloat
-  , title =? "Order Chain - Market Snapshots" --> doFloat
-  , title =? "emacs-run-launcher" --> doFloat
 --   , title =? "Mozilla Firefox"     --> doShift ( myWorkspaces !! 1 )
 --   , className =? "Brave-browser"   --> doShift ( myWorkspaces !! 1 )
 --   , className =? "mpv"             --> doShift ( myWorkspaces !! 7 )

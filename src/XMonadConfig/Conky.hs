@@ -63,9 +63,18 @@ isConkyWithConfig config pid = do
 
 isConkyRunning :: FilePath -> IO Bool
 isConkyRunning config = do
+  logToTmpFile $ "Checking if conky is running with config: " ++ config
   pids <- listDirectory "/proc"
+  logToTmpFile $ "Found entries in /proc: " ++ show pids
   let onlyPids = filter (all (`elem` ['0' .. '9'])) pids
-  anyM (isConkyWithConfig config . read) onlyPids
+  logToTmpFile $ "Filtered numeric PIDs: " ++ show onlyPids
+  result <- anyM (\pid -> do
+                     let pidInt = read pid
+                     logToTmpFile $ "Checking PID: " ++ show pidInt
+                     isConkyWithConfig config pidInt
+                 ) onlyPids
+  logToTmpFile $ "Final result: " ++ show result
+  return result
 
 anyM :: (Monad m) => (a -> m Bool) -> [a] -> m Bool
 anyM p = foldM (\acc x -> if acc then return True else p x) False
@@ -84,6 +93,16 @@ startConkyIfNotRunning config = do
     else do
       io $ logToTmpFile $ ": Starting conky with config: " ++ config
       spawn $ "conky -c " ++ config ++ " >> /home/me/.cache/conky/conky-" ++ baseName ++ ".log 2>&1"
+
+startConkyIfNotRunningPath :: FilePath -> X ()
+startConkyIfNotRunningPath config = do
+  let baseName = takeBaseName config
+  io $ createDirectoryIfMissing True "/tmp/conky"
+  running <- io $ isConkyRunning config
+  io $ logToTmpFile ("Starting conky " ++ baseName)
+  unless running $
+    spawn $
+      "conky -c " ++ config ++ " >> /tmp/conky/conky-" ++ baseName ++ ".log 2>&1"
 
 startConky :: FilePath -> X ()
 startConky config = do
@@ -125,12 +144,27 @@ disableConkyConfig baseName = do
 startConkyIfEnabled :: X ()
 startConkyIfEnabled = do
   enabled <- io listEnabledConfigs
-  mapM_
-    ( \base -> do
-        let config = "/home/me/.config/conky/conf-enabled" </> (base ++ ".conf")
-        startConkyIfNotRunningPath config
-    )
-    enabled
+  io $ logToTmpFile $ "[startConkyIfEnabled] Enabled config names: " ++ show enabled
+
+  let confDir = "/home/me/.config/conky/conf-enabled"
+  io $ logToTmpFile $ "[startConkyIfEnabled] Scanning directory: " ++ confDir
+
+  confFiles <- io $ listDirectory confDir
+  io $ logToTmpFile $ "[startConkyIfEnabled] Files in conf-enabled: " ++ show confFiles
+
+  let matchingConfs =
+        [ confDir </> f
+        | f <- confFiles
+        , takeBaseName f `elem` enabled
+        , ".conf" `isSuffixOf` f
+        ]
+
+  io $ logToTmpFile $ "[startConkyIfEnabled] Matching configs to start: " ++ show matchingConfs
+
+  mapM_ (\path -> do
+            io $ logToTmpFile $ "[startConkyIfEnabled] Attempting to start: " ++ path
+            startConkyIfNotRunningPath path
+        ) matchingConfs
 
 stopConky :: X ()
 stopConky = do
@@ -144,26 +178,28 @@ stopConky = do
 
 listEnabledConfigs :: IO [String]
 listEnabledConfigs = do
+  logToTmpFile "Starting listEnabledConfigs"
   mRunDir <- lookupEnv "XDG_RUNTIME_DIR"
+  logToTmpFile $ "XDG_RUNTIME_DIR lookup result: " ++ show mRunDir
   case mRunDir of
-    Nothing -> return []
+    Nothing -> do
+      logToTmpFile "No XDG_RUNTIME_DIR found, returning empty list"
+      return []
     Just runDir -> do
       let dir = runDir </> "conky-enabled"
+      logToTmpFile $ "Looking for directory: " ++ dir
       exists <- doesDirectoryExist dir
+      logToTmpFile $ "Directory exists? " ++ show exists
       if not exists
-        then return []
+        then do
+          logToTmpFile "Directory missing, returning empty list"
+          return []
         else do
           files <- listDirectory dir
-          return [takeBaseName f | f <- files, ".enabled" `isSuffixOf` f]
-
-startConkyIfNotRunningPath :: FilePath -> X ()
-startConkyIfNotRunningPath config = do
-  let baseName = takeBaseName config
-  io $ createDirectoryIfMissing True "/home/me/.cache/conky"
-  running <- io $ isConkyRunning config
-  unless running $
-    spawn $
-      "conky -c " ++ config ++ " >> /home/me/.cache/conky/conky-" ++ baseName ++ ".log 2>&1"
+          logToTmpFile $ "Files found: " ++ show files
+          let enabled = [takeBaseName f | f <- files, ".enabled" `isSuffixOf` f]
+          logToTmpFile $ "Enabled configs: " ++ show enabled
+          return enabled
 
 stopConkyWithConfig :: FilePath -> X ()
 stopConkyWithConfig config = do
@@ -187,6 +223,7 @@ getConkys = withWindowSet $ \ws -> filterM isConky (W.integrate' . W.stack . W.w
 
 raiseConkys :: X ()
 raiseConkys = do
+  runConky
   wins <- getConkys
   mapM_ (\w -> windows (W.shiftMaster . W.focusWindow w)) (reverse wins)
 
@@ -203,6 +240,7 @@ raiseConkys = do
 
 lowerConkys :: X ()
 lowerConkys = do
+  runConky
   conkyWins <- getConkys
   -- Sink all conky windows first
   mapM_ (\w -> windows (W.sink w)) conkyWins

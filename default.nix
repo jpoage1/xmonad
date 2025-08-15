@@ -6,6 +6,7 @@ let
     xmonad
     xmonad-contrib
     process
+    monad-logger
   ]);
 in
 pkgs.stdenv.mkDerivation {
