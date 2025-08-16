@@ -18,6 +18,7 @@ import XMonadConfig.Logging (logToTmpFile)
 import XMonadConfig.PromptUtils
 import XMonadConfig.StatusBar
 import XMonad.Hooks.SetWMName
+import System.Process (readProcess, callCommand)
 
 myTerminal :: String
 myTerminal = "alacritty"    -- Sets default terminal
@@ -40,10 +41,13 @@ myKeys =
     ("M-S-r", spawn "xmonad --restart"),
     ("M-m", spawn "rofi -show drun"),
     ("M-w", spawn "rofi -show window"),
-    ("<XF86AudioRaiseVolume>", spawn "pamixer -i 5"),
+    -- ("<XF86AudioRaiseVolume>", io $ changeVolume "-i 5"),
+    -- ("<XF86AudioLowerVolume>", io $ changeVolume "-d 5"),
+    -- ("<XF86AudioMute>",       io $ changeVolume "-t"),
+    ("<XF86AudioRaiseVolume>", spawn "pamixer --allow-boost -i 5"),
     ("<XF86AudioLowerVolume>", spawn "pamixer -d 5"),
     ("<XF86AudioMute>", spawn "pamixer -t"),
-    ("M-<Insert>", spawn "toggle-kb-layout.sh"), -- Work-around
+    ("M-<Insert>", spawn "toggle-kb-layout.sh"),
     ("M-S-<Insert>", toggleKBLayout), -- Not Working
     ("<Insert>", pasteSelection),
     ("M-S-h", withFocused (keysResizeWindow (-10, 0) (0, 0))),
@@ -85,3 +89,28 @@ takeScreenshotWithPrompt tmpPath = do
   case filename of
     Nothing -> return ()
     Just fn -> liftIO $ renameFile tmpPath fn
+
+changeVolume :: String -> IO ()
+changeVolume volumeCmd = do
+    let msgTag = "myvolume"
+    -- Change the volume using pamixer
+    callCommand $ "pamixer --allow-boost " ++ volumeCmd
+
+    -- Get volume percentage
+    volumeStr <- readProcess "pamixer" ["--get-volume"] ""
+    let volume = filter (/= '\n') volumeStr
+
+    io $ logToTmpFile $ "notify-send " ++ volume
+
+    -- Get mute status
+    muteStr <- readProcess "pamixer" ["--get-mute"] ""
+    let mute = filter (/= '\n') muteStr
+    -- Show notification
+    if mute == "true" || volume == "0"
+    then callProcess "dunstify"
+        ["-a","changeVolume","-u","low","-i","audio-volume-muted","-h","string:x-dunst-stack-tag:" ++ msgTag,"Volume muted"]
+    else callProcess "dunstify"
+        ["-a","changeVolume","-u","low","-i","audio-volume-high","-h","string:x-dunst-stack-tag:" ++ msgTag,"-h","int:value:" ++ volume,"Volume: " ++ volume ++ "%"]
+
+    -- Play sound
+    callCommand "canberra-gtk-play -i audio-volume-change -d changeVolume"

@@ -72,6 +72,7 @@ myManageHook = composeAll
   , className =? "splash"          --> doFloat
   , className =? "toolbar"         --> doFloat
   , className =? "pavucontrol"         --> doFloat
+  , className =? "pwvucontrol"         --> doFloat
 
   , className =? ".blueman-manager-wrapped" --> doFloat
   , className =? "nm-connection-editor" --> doFloat
