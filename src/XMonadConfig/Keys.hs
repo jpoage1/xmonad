@@ -13,7 +13,7 @@ import XMonad.Prompt.ConfirmPrompt
 import XMonad.Prompt.Input
 import XMonad.Util.Paste
 import XMonad.Util.Run (safeSpawn)
-import XMonadConfig.Conky (runConky, stopConky, raiseConkys, lowerConkys)
+import XMonadConfig.Conky (runConky, stopConky, raiseConkys, raiseConky, lowerConkys)
 import XMonadConfig.Logging (logToTmpFile)
 import XMonadConfig.PromptUtils
 import XMonadConfig.StatusBar
@@ -56,8 +56,8 @@ myKeys =
 
     -- Conky
   , ("M-c", stopConky)
-  , ("M-S-C-c", runConky)
-  , ("M-S-c", raiseConkys)
+--   , ("M-S-c", raiseConkys)
+  , ("M-S-c", raiseConky)
   , ("M-C-c", lowerConkys)
 
   -- Screenshot

@@ -1,4 +1,4 @@
-module XMonadConfig.Conky (runConky, startConkyIfEnabled, stopConky, raiseConkys, lowerConkys) where
+module XMonadConfig.Conky (runConky, startConkyIfEnabled, stopConky, raiseConkys, raiseConky, lowerConkys) where
 
 import Control.Exception (SomeException, try)
 import Control.Monad
@@ -33,6 +33,15 @@ import XMonad.Actions.WindowBringer (bringWindow)
 import Data.Maybe (isJust)
 import Data.List (find, partition)
 import Control.Monad (filterM)
+import Control.Concurrent (threadDelay)
+
+
+import XMonad.StackSet (peek)
+import XMonad.Util.WindowProperties (getProp32s)
+
+-- import XMonad.Util.XUtils (getAtom)
+import Graphics.X11.Xlib
+import Graphics.X11.Xlib.Extras
 
 runConky :: X ()
 runConky = do
@@ -240,11 +249,89 @@ raiseConkys = do
 --     { W.workspace = (W.workspace (W.current s))
 --       { W.stack = Just $ W.Stack (head rest) [] (tail rest ++ cons) } } }
 
+-- lowerConkys :: X ()
+-- lowerConkys = do
+--   runConky
+--   conkyWins <- getConkys
+--   -- Sink all conky windows first
+--   mapM_ (\w -> windows (W.sink w)) conkyWins
+--   -- Then send each to the bottom of the stack
+--   mapM_ (\w -> windows (W.swapDown . W.focusWindow w)) conkyWins
+
+
+-- Get all windows on the current workspace
+allWindowsInCurrent :: X [Window]
+allWindowsInCurrent = withWindowSet $ \ws -> do
+    let wins = maybe [] W.integrate (W.stack . W.workspace . W.current $ ws)
+    io $ logToTmpFile $ "All windows on current workspace: " ++ show wins
+    return wins
+
+-- Filter windows that have _NET_WM_STATE_STICKY
+getStickyWindows :: X [Window]
+getStickyWindows = do
+    dpy <- asks display
+    allWins <- allWindowsMapped
+    atomSticky <- getAtom "_NET_WM_STATE_STICKY"
+    stickyWins <- filterM (isWindowSticky dpy atomSticky) allWins
+    io $ logToTmpFile $ "Sticky windows: " ++ show stickyWins
+    return stickyWins
+
+isWindowSticky :: Display -> Atom -> Window -> X Bool
+isWindowSticky dpy atom w = io $ do
+    mbr <- getWindowProperty32 dpy atom w
+    let sticky = maybe False (not . null) mbr
+    logToTmpFile $ "Window " ++ show w ++ " sticky? " ++ show sticky
+    return sticky
+
+raiseConky :: X ()
+raiseConky = do
+    runConky
+    io $ threadDelay 500000  -- 0.5 seconds
+    allWindows <- allWindowsMapped
+    maybeConky <- findWindowByClass "Conky" allWindows
+    case maybeConky of
+        Just w  -> withDisplay $ \d -> io $ raiseWindow d w
+        Nothing -> io $ logToTmpFile "nothing happened"
+
+findWindowByClass :: String -> [Window] -> X (Maybe Window)
+findWindowByClass cls ws = go ws
+  where
+    go [] = do
+        io $ logToTmpFile $ "No matching window for class: " ++ cls
+        return Nothing
+    go (w:rest) = do
+        cn <- runQuery className w
+        io $ logToTmpFile $ "Checking window " ++ show w ++ ", className: " ++ show cn
+        if cn == cls
+            then do
+                io $ logToTmpFile $ "Found window " ++ show w
+                return (Just w)
+            else go rest
+
+allWindowsMapped :: X [Window]
+allWindowsMapped = withDisplay $ \dpy -> io $ do
+    rootw <- rootWindow dpy $ defaultScreen dpy
+    (_, _, ws) <- queryTree dpy rootw
+    io $ logToTmpFile $ "All mapped windows: " ++ show ws
+    return ws
+
+-- conkyHook :: Query (Endo WindowSet)
+-- conkyHook = ask >>= \w -> liftX (withDisplay $ \d -> io $ lowerWindow d w) >> idHook
+
+
+-- lowerConkys :: X ()
+-- lowerConkys = do
+--     runConky
+--     conkyWins <- getStickyConkys
+--     -- Sink all Conky windows first
+--     mapM_ (windows . W.sink) conkyWins
+--     -- Then lower them to the bottom of the stack
+--     mapM_ (\w -> windows (W.swapDown . W.focusWindow w)) conkyWins
+--     io $ logToTmpFile $ "Lowered Conky windows: " ++ show conkyWins
+
+
 lowerConkys :: X ()
 lowerConkys = do
-  runConky
-  conkyWins <- getConkys
-  -- Sink all conky windows first
-  mapM_ (\w -> windows (W.sink w)) conkyWins
-  -- Then send each to the bottom of the stack
-  mapM_ (\w -> windows (W.swapDown . W.focusWindow w)) conkyWins
+    stopConky
+    io $ threadDelay 500000  -- 0.5 seconds
+    runConky

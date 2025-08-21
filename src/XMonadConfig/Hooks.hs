@@ -52,13 +52,9 @@ myStartupHook = do
 -- myManageHook :: ManageHook
 myManageHook :: XMonad.Query (Data.Monoid.Endo WindowSet)
 myManageHook = composeAll
-  -- 'doFloat' forces a window to float.  Useful for dialog boxes and such.
-  -- using 'doShift ( myWorkspaces !! 7)' sends program to workspace 8!
-  -- I'm doing it this way because otherwise I would have to write out the full
-  -- name of my workspaces and the names would be very long if using clickable workspaces.
   [ className =? "Xmessage" --> doFloat,
     className =? "Zenity" --> doFloat,
-    className =? "Conky" --> conkyDoFloat,
+    className =? "Conky" --> conkyHook,
     className =? "Xmessage" --> doFloat,
     isDialog --> doFloat
 --   , title =? "conky_top"    --> myDoSink
@@ -91,5 +87,5 @@ myManageHook = composeAll
   , isFullscreen -->  doFullFloat
   ] <+> namedScratchpadManageHook myScratchPads
 
-conkyDoFloat :: Query (Endo WindowSet)
-conkyDoFloat = ask >>= \w -> liftX (withDisplay $ \d -> io $ lowerWindow d w) >> idHook
+conkyHook :: Query (Endo WindowSet)
+conkyHook = ask >>= \w -> liftX (withDisplay $ \d -> io $ lowerWindow d w) >> idHook
