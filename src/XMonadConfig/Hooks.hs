@@ -2,7 +2,6 @@ module XMonadConfig.Hooks (myStartupHook, myManageHook) where
 
 import XMonad
 import XMonad.Actions.MouseResize
-import XMonad.Hooks.ManageDocks (avoidStruts)
 import XMonad.Hooks.ManageHelpers
 import XMonad.Layout.BorderResize
 import XMonad.Layout.LayoutModifier
@@ -15,39 +14,44 @@ import XMonadConfig.Conky (startConkyIfEnabled)
 import XMonadConfig.Logging (logToTmpFile)
 import XMonadConfig.NitrogenWallpaper (setRandomNitrogenWallpaper)
 import XMonadConfig.Scratchpads (myScratchPads)
-import XMonadConfig.StatusBar (launchPolybars, launchTaffybars)
+import XMonadConfig.StatusBar (launchTaffybars)
 import qualified XMonad.StackSet as W
 import Data.Monoid
 import XMonad.Util.NamedScratchpad
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 
+import Control.Concurrent (forkIO, threadDelay)
 myTerminal :: String
-myTerminal = "alacritty"    -- Sets default terminal
+myTerminal = "alacritty"
 
 myBrowser :: String
-myBrowser = "qutebrowser "  -- Sets qutebrowser as browser
+myBrowser = "qutebrowser "
 
 myEditor :: String
--- myEditor = "emacsclient -c -a 'emacs' "  -- Sets emacs as editor
-myEditor = myTerminal ++ " -e vim "    -- Sets vim as editor
-
+myEditor = myTerminal ++ " -e vim "
 
 myStartupHook :: X ()
 myStartupHook = do
-  io $ logToTmpFile "Startup hook triggered"
---   spawn "picom --backend glx" -- Compositor
-  spawn "dunst"
-  spawn "lxqt-session -w xmonad"
-  spawn "lxqt-powermanagement"
-  launchTaffybars
-  spawn "setxkbmap -layout us -variant dvorak"
---   spawn "xss-lock --transfer-sleep-lock -- i3lock --nofork"
-  -- launchPolybar
+    io $ logToTmpFile "Startup hook triggered"
 
-  startConkyIfEnabled
-  io $ setRandomNitrogenWallpaper
-  io $ logToTmpFile "Startup hook finished"
+    -- lightweight spawns
+    mapM_ spawn [
+        -- "picom --backend glx",
+        -- "dunst",
+        -- "xss-lock --transfer-sleep-lock -- i3lock --nofork",
+        "lxqt-powermanagement",
+        "setxkbmap -layout us -variant dvorak"]
+
+    -- fork IO-heavy or delayed tasks
+    io $ forkIO $ do
+        launchTaffybars
+        setRandomNitrogenWallpaper
+        return ()
+
+    spawn "lxqt-session -w xmonad"
+    io $ logToTmpFile "Startup hook finished"
+
 
 -- myManageHook :: ManageHook
 myManageHook :: XMonad.Query (Data.Monoid.Endo WindowSet)

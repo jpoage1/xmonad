@@ -1,12 +1,12 @@
 module XMonadConfig.NitrogenWallpaper (setRandomNitrogenWallpaper) where
 
 import Control.Monad (filterM)
-import Data.List (isPrefixOf, isSuffixOf)
+import Data.List (isPrefixOf)
 import System.Directory (doesDirectoryExist, listDirectory)
 import System.Environment (getEnv)
 import System.FilePath ((</>))
 import System.IO (readFile)
-import System.Process (callProcess, readProcess)
+import System.Process (callProcess)
 import System.Random.Shuffle (shuffleM)
 
 setRandomNitrogenWallpaper :: IO ()

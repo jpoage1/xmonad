@@ -15,11 +15,9 @@ import XMonad.Layout.NoBorders
 import XMonad.Layout.SimpleFloat
 import XMonad.Layout.ThreeColumns
 import XMonad.Util.EZConfig (additionalKeysP)
-import XMonadConfig.Conky (runConky)
 import XMonadConfig.Hooks
 import XMonadConfig.Keys
 import XMonadConfig.Logging (logToTmpFile)
-import XMonadConfig.NitrogenWallpaper (setRandomNitrogenWallpaper)
 
 main :: IO ()
 main =

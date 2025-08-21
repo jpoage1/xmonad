@@ -1,4 +1,4 @@
-module XMonadConfig.Conky (runConky, startConkyIfEnabled, stopConky, raiseConkys, raiseConky, lowerConkys) where
+module XMonadConfig.Conky (runConky, startConkyIfEnabled, stopConky, raiseConky, lowerConkys) where
 
 import Control.Exception (SomeException, try)
 import Control.Monad
@@ -6,7 +6,6 @@ import Control.Monad (when)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import Data.List (isInfixOf, isSuffixOf)
-import Data.Maybe (isJust)
 import Data.Time
 import Data.Time.Clock (getCurrentTime)
 import System.Directory
@@ -14,32 +13,18 @@ import System.Directory (createDirectoryIfMissing, doesFileExist, getHomeDirecto
 import System.Environment (lookupEnv)
 import System.FilePath
 import System.FilePath (takeBaseName, (</>))
-import System.IO (appendFile)
 import System.Posix.Process (getProcessGroupIDOf, getProcessStatus)
 import System.Posix.Signals (nullSignal, signalProcess)
 import System.Posix.Types (CPid (..))
 import System.Process
-import System.Process (spawnCommand)
-import Text.Read (readMaybe)
 import XMonad
 import qualified XMonad.Util.Run as Run
 import XMonadConfig.Logging (logToTmpFile)
-import XMonad.Util.NamedWindows (getName)
 import qualified XMonad.StackSet as W
-import XMonad.Util.NamedWindows (getName)
-import XMonad.Actions.WithAll (sinkAll)
-import XMonad.Actions.WindowBringer (bringWindow)
--- import XMonad.X11 (getWindowAttributes, wa_override_redirect)
-import Data.Maybe (isJust)
 import Data.List (find, partition)
 import Control.Monad (filterM)
 import Control.Concurrent (threadDelay)
 
-
-import XMonad.StackSet (peek)
-import XMonad.Util.WindowProperties (getProp32s)
-
--- import XMonad.Util.XUtils (getAtom)
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 
@@ -232,11 +217,11 @@ isConky w = do
 getConkys :: X [Window]
 getConkys = withWindowSet $ \ws -> filterM isConky (W.integrate' . W.stack . W.workspace . W.current $ ws)
 
-raiseConkys :: X ()
-raiseConkys = do
-  runConky
-  wins <- getConkys
-  mapM_ (\w -> windows (W.shiftMaster . W.focusWindow w)) (reverse wins)
+-- raiseConkys :: X ()
+-- raiseConkys = do
+--   runConky
+--   wins <- getConkys
+--   mapM_ (\w -> windows (W.shiftMaster . W.focusWindow w)) (reverse wins)
 
 -- lowerConkys :: X ()
 -- lowerConkys = do
@@ -314,20 +299,6 @@ allWindowsMapped = withDisplay $ \dpy -> io $ do
     (_, _, ws) <- queryTree dpy rootw
     io $ logToTmpFile $ "All mapped windows: " ++ show ws
     return ws
-
--- conkyHook :: Query (Endo WindowSet)
--- conkyHook = ask >>= \w -> liftX (withDisplay $ \d -> io $ lowerWindow d w) >> idHook
-
-
--- lowerConkys :: X ()
--- lowerConkys = do
---     runConky
---     conkyWins <- getStickyConkys
---     -- Sink all Conky windows first
---     mapM_ (windows . W.sink) conkyWins
---     -- Then lower them to the bottom of the stack
---     mapM_ (\w -> windows (W.swapDown . W.focusWindow w)) conkyWins
---     io $ logToTmpFile $ "Lowered Conky windows: " ++ show conkyWins
 
 
 lowerConkys :: X ()

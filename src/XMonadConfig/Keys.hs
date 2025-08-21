@@ -13,7 +13,7 @@ import XMonad.Prompt.ConfirmPrompt
 import XMonad.Prompt.Input
 import XMonad.Util.Paste
 import XMonad.Util.Run (safeSpawn)
-import XMonadConfig.Conky (runConky, stopConky, raiseConkys, raiseConky, lowerConkys)
+import XMonadConfig.Conky (runConky, stopConky, raiseConky, lowerConkys)
 import XMonadConfig.Logging (logToTmpFile)
 import XMonadConfig.PromptUtils
 import XMonadConfig.StatusBar
@@ -84,7 +84,7 @@ myKeys =
   , ("M-S-<Up>", withFocused (keysResizeWindow (0, -10) (0, 0)))
   , ("M-S-<Right>", withFocused (keysResizeWindow (10, 0) (0, 0)))
   , ("M-S-<Left>", withFocused (keysResizeWindow (-10, 0) (0, 0)))
-  , ("M-S-p", launchTaffybars)
+  , ("M-S-p", io $ launchTaffybars)
   , ("M-S-r", spawn "xmonad --restart")
   , ("M-S-.", confirmPrompt myXPConfig "Exit XMonad?" $ io exitSuccess)
 
