@@ -20,6 +20,16 @@ import XMonadConfig.StatusBar
 import XMonad.Hooks.SetWMName
 import System.Process (readProcess, callCommand)
 
+import XMonad.Util.NamedScratchpad
+import qualified XMonad.StackSet as W
+import XMonad.Util.NamedActions
+import XMonad.Hooks.SetWMName
+import XMonad.Util.NamedActions
+import XMonadConfig.Scratchpads (myScratchPads)
+
+
+
+
 myTerminal :: String
 myTerminal = "alacritty"    -- Sets default terminal
 
@@ -29,39 +39,61 @@ myBrowser = "qutebrowser "  -- Sets qutebrowser as browser
 
 myKeys :: [(String, X ())]
 myKeys =
-  [ ("M-S-'", kill),
-    ("<Print>", unGrab *> spawn "scrot -s ~/Pictures/screenshot_%Y-%m-%d_%H-%M-%S.png"),
-    ("M-<Print>", takeScreenshotWithPrompt "/tmp/screenshot.png"),
-    ("M-S-.", confirmPrompt myXPConfig "Exit XMonad?" $ io exitSuccess),
-    ("M-l", spawn "i3lock"),
-    ("M-c", stopConky),
-    ("M-S-c", raiseConkys),
-    ("M-C-c", lowerConkys),
-    ("M-S-p", launchTaffybars),
-    ("M-S-r", spawn "xmonad --restart"),
-    ("M-m", spawn "rofi -show drun"),
-    ("M-w", spawn "rofi -show window"),
+  [
     -- ("<XF86AudioRaiseVolume>", io $ changeVolume "-i 5"),
     -- ("<XF86AudioLowerVolume>", io $ changeVolume "-d 5"),
     -- ("<XF86AudioMute>",       io $ changeVolume "-t"),
-    ("<XF86AudioRaiseVolume>", spawn "pamixer --allow-boost -i 5"),
-    ("<XF86AudioLowerVolume>", spawn "pamixer -d 5"),
-    ("<XF86AudioMute>", spawn "pamixer -t"),
-    ("M-<Insert>", spawn "toggle-kb-layout.sh"),
-    ("M-S-<Insert>", toggleKBLayout), -- Not Working
-    ("<Insert>", pasteSelection),
-    ("M-S-h", withFocused (keysResizeWindow (-10, 0) (0, 0))),
-    ("M-S-l", withFocused (keysResizeWindow (10, 0) (0, 0))),
-    ("M-S-k", withFocused (keysResizeWindow (0, -10) (0, 0))),
-    ("M-S-j", withFocused (keysResizeWindow (0, 10) (0, 0))),
-    ("M-S-<Down>", withFocused (keysResizeWindow (0, 10) (0, 0))),
-    ("M-S-<Up>", withFocused (keysResizeWindow (0, -10) (0, 0))),
-    ("M-S-<Right>", withFocused (keysResizeWindow (10, 0) (0, 0))),
-    ("M-S-<Left>", withFocused (keysResizeWindow (-10, 0) (0, 0))),
-    ("M-b", sendMessage ToggleStruts)
+    ("<XF86AudioRaiseVolume>", spawn "pamixer --allow-boost -i 5")
+  , ("<XF86AudioLowerVolume>", spawn "pamixer -d 5")
+  , ("<XF86AudioMute>", spawn "pamixer -t")
+  , ("<Insert>", pasteSelection)
+
+  , ("M-S-w", windows $ W.swapMaster . W.focusDown)
+  , ("M-S-s", windows $ W.shiftMaster . W.focusDown)
+  , ("M-C-w", windows $ W.swapMaster . W.focusUp)
+  , ("M1-<Tab>", windows $ W.shiftMaster . W.focusUp)
+  , ("M1-S-<Tab>", windows W.focusDown)
+
+    -- Conky
+  , ("M-c", stopConky)
+  , ("M-S-C-c", runConky)
+  , ("M-S-c", raiseConkys)
+  , ("M-C-c", lowerConkys)
+
+  -- Screenshot
+  , ("<Print>", unGrab *> spawn "scrot -s ~/Pictures/screenshot_%Y-%m-%d_%H-%M-%S.png")
+  , ("M-<Print>", takeScreenshotWithPrompt "/tmp/screenshot.png")
+
+    -- Super
+  , ("M-b", sendMessage ToggleStruts)
   , ("M-<Return>", spawn (myTerminal))
   , ("M-b", spawn (myBrowser))
-  , ("M-M1-h", spawn (myTerminal ++ " -e htop"))]
+  , ("M-<Insert>", spawn "toggle-kb-layout.sh")
+  , ("M-m", spawn "rofi -show drun")
+  , ("M-w", spawn "rofi -show window")
+  , ("M-l", spawn "i3lock")
+
+    -- Super + Shift
+  , ("M-S-'", kill)
+  , ("M-S-<Insert>", toggleKBLayout) -- Not Working
+  , ("M-S-h", withFocused (keysResizeWindow (-10, 0) (0, 0)))
+  , ("M-S-l", withFocused (keysResizeWindow (10, 0) (0, 0)))
+  , ("M-S-k", withFocused (keysResizeWindow (0, -10) (0, 0)))
+  , ("M-S-j", withFocused (keysResizeWindow (0, 10) (0, 0)))
+  , ("M-S-<Down>", withFocused (keysResizeWindow (0, 10) (0, 0)))
+  , ("M-S-<Up>", withFocused (keysResizeWindow (0, -10) (0, 0)))
+  , ("M-S-<Right>", withFocused (keysResizeWindow (10, 0) (0, 0)))
+  , ("M-S-<Left>", withFocused (keysResizeWindow (-10, 0) (0, 0)))
+  , ("M-S-p", launchTaffybars)
+  , ("M-S-r", spawn "xmonad --restart")
+  , ("M-S-.", confirmPrompt myXPConfig "Exit XMonad?" $ io exitSuccess)
+
+  -- Super + Alt
+  , ("M-M1-h", namedScratchpadAction myScratchPads "htop")
+  , ("M-M1-t", namedScratchpadAction myScratchPads "terminal")
+  , ("M-<Escape>", namedScratchpadAction myScratchPads "calculator")
+  , ("M-M1-w", namedScratchpadAction myScratchPads "kweather")
+  ]
 
 
 

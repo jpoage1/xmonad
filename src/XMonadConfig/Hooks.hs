@@ -14,10 +14,13 @@ import XMonad.ManageHook
 import XMonadConfig.Conky (startConkyIfEnabled)
 import XMonadConfig.Logging (logToTmpFile)
 import XMonadConfig.NitrogenWallpaper (setRandomNitrogenWallpaper)
+import XMonadConfig.Scratchpads (myScratchPads)
 import XMonadConfig.StatusBar (launchPolybars, launchTaffybars)
 import qualified XMonad.StackSet as W
 import Data.Monoid
 import XMonad.Util.NamedScratchpad
+import Graphics.X11.Xlib
+import Graphics.X11.Xlib.Extras
 
 myTerminal :: String
 myTerminal = "alacritty"    -- Sets default terminal
@@ -55,12 +58,12 @@ myManageHook = composeAll
   -- name of my workspaces and the names would be very long if using clickable workspaces.
   [ className =? "Xmessage" --> doFloat,
     className =? "Zenity" --> doFloat,
-    className =? "Conky" --> myDoSink,
+    className =? "Conky" --> conkyDoFloat,
     className =? "Xmessage" --> doFloat,
     isDialog --> doFloat
-  , title =? "conky_top"    --> myDoSink
-  , title =? "conky_middle" --> myDoSink
-  , title =? "conky_bottom" --> myDoSink
+--   , title =? "conky_top"    --> myDoSink
+--   , title =? "conky_middle" --> myDoSink
+--   , title =? "conky_bottom" --> myDoSink
   , className =? "confirm"         --> doFloat
   , className =? "file_progress"   --> doFloat
   , className =? "dialog"          --> doFloat
@@ -88,36 +91,5 @@ myManageHook = composeAll
   , isFullscreen -->  doFullFloat
   ] <+> namedScratchpadManageHook myScratchPads
 
-
-myDoSink = ask >>= \w -> liftX (windows (W.sink w)) >> idHook
-
-myScratchPads :: [NamedScratchpad]
-myScratchPads = [ NS "terminal" spawnTerm findTerm manageTerm
-                , NS "mocp" spawnMocp findMocp manageMocp
-                , NS "calculator" spawnCalc findCalc manageCalc
-                ]
-  where
-    spawnTerm  = myTerminal ++ " -t scratchpad"
-    findTerm   = title =? "scratchpad"
-    manageTerm = customFloating $ W.RationalRect l t w h
-               where
-                 h = 0.9
-                 w = 0.9
-                 t = 0.95 -h
-                 l = 0.95 -w
-    spawnMocp  = myTerminal ++ " -t mocp -e mocp"
-    findMocp   = title =? "mocp"
-    manageMocp = customFloating $ W.RationalRect l t w h
-               where
-                 h = 0.9
-                 w = 0.9
-                 t = 0.95 -h
-                 l = 0.95 -w
-    spawnCalc  = "qalculate-qt"
-    findCalc   = className =? "Qalculate-qt"
-    manageCalc = customFloating $ W.RationalRect l t w h
-               where
-                 h = 0.5
-                 w = 0.4
-                 t = 0.75 -h
-                 l = 0.70 -w
+conkyDoFloat :: Query (Endo WindowSet)
+conkyDoFloat = ask >>= \w -> liftX (withDisplay $ \d -> io $ lowerWindow d w) >> idHook

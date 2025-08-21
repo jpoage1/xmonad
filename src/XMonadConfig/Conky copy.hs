@@ -217,6 +217,11 @@ conkyTitles = ["conky_bottom", "conky_middle", "conky_top"]
 
 isConky :: Window -> X Bool
 isConky w = do
+  name <- getName w
+  return (show name `elem` conkyTitles)
+
+isConky :: Window -> X Bool
+isConky w = do
   cls <- runQuery className w
   return (cls == "Conky")
 

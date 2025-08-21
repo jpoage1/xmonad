@@ -30,3 +30,4 @@ executable my-xmonad
                      , XMonadConfig.NitrogenWallpaper
                      , XMonadConfig.PromptUtils
                      , XMonadConfig.StatusBar
+                     , XMonadConfig.ScratchPads
